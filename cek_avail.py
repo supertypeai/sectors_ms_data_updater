@@ -19,7 +19,8 @@ key = os.environ.get("SUPABASE_KEY")
 supabase = create_client(url_supabase, key)
 
 # Fetch data from Supabase
-ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').eq("current_source", 2).execute()
+# ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').eq("current_source", 2).execute()
+ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').execute()
 symbols = [d['symbol'].lower().replace('.jk', '') for d in ms_code_data.data]
 
 # List to hold symbols with no data
