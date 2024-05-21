@@ -1,7 +1,6 @@
 import requests
 import os
 from dotenv import load_dotenv
-load_dotenv()
 import os
 from supabase import create_client
 import pandas as pd
@@ -10,16 +9,8 @@ import numpy as np
 import argparse
 import requests
 import json
-
-url = 'https://raw.githubusercontent.com/supertypeai/sectors_get_conversion_rate/master/conversion_rate.json'
-
-response = requests.get(url)
-data = response.json()
-rate = float(data['USD']['IDR'])
-
-url_supabase = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_KEY")
-supabase = create_client(url_supabase, key)
+from datetime import datetime
+load_dotenv()
 
 def fetch_form_responses(url, headers, performanceId, get_data):
     responses = {}
@@ -92,7 +83,168 @@ def quarter_to_date(quarter_str):
     end_date = quarter_end_dates.get(quarter)
     return f"{year}-{end_date}"
 
+def process(url, url_ms, headers, avail_dict):
+    failed_symbols = []
+    for symbol, code in avail_dict.items():
+        try:
+            data_list = []
+            responses = fetch_form_responses(url, headers, code, "financials")
+            responses_detail = fetch_form_responses(url_ms, headers, code, "financials_details")
+
+            is_data = responses_detail['incomeStatement']
+            bs_data = responses_detail['balanceSheet']
+            cf_data = responses_detail['cashFlow']
+
+            expected_value = [
+            'Total Revenue','Net Income Available to Common Stockholders','EBITDA',
+            'Diluted Weighted Average Shares Outstanding','Gross Profit','Pretax Income',
+            'Provision for Income Tax', 'Interest Expense Net of Capitalized Interest','Total Operating Profit/Loss',
+
+            'Cash Flows from/Used in Operating Activities, Direct', 'Free Cash Flow',
+
+            'Total Assets', 'Total Current Assets', 'Total Liabilities', 'Total Current Liabilities', 'Total Equity',
+            'Equity Attributable to Parent Stockholders','Cash, Cash Equivalents and Short Term Investments', 'Cash']
+
+            # 'Total Non-Current Assets', 
+
+            all_data = [is_data, bs_data, cf_data]
+            last_quarter = [
+                (lambda x: x.remove('TTM') or x[-1] if 'TTM' in x else x[-1])(lst['columnDefs'])
+                for lst in [is_data, bs_data, cf_data]
+            ]
+            indices = [lst['columnDefs'].index(value) for lst, value in zip([is_data, bs_data, cf_data], last_quarter)]
+
+            latest_quarters_data = {
+                "symbol" : symbol,
+                "date" : f'{last_quarter[0]}-12-31' if args.annual else quarter_to_date(last_quarter[0]),
+                "source" : 3
+            }
+
+            for data, index in zip(all_data, indices):
+                for row in data['rows']:
+                    flattened_data = flatten_sublevel(row['subLevel'])
+                    print(flattened_data)
+                    for i in range(len(flattened_data)):
+                        row_label = flattened_data[i]['label']
+                        if row_label in expected_value:
+                            row_data = flattened_data[i]['datum'] 
+                            if data['footer']['currency'] == 'USD' and row_label != 'Diluted Weighted Average Shares Outstanding':
+                                if data["footer"]["orderOfMagnitude"] == "Million":
+                                    quarter_value = (int(row_data[index]*rate*1000000) if row_data[index] is not None else np.nan)
+                                elif data["footer"]["orderOfMagnitude"] == "Billion":
+                                    quarter_value = (int(row_data[index]*rate*1000000000) if row_data[index] is not None else np.nan)
+                                else:
+                                    print(f"data {symbol} in tab {data} have no order of magnitude")
+                                    logging.error(f"{today_date}: data {symbol} in tab {data} have no order of magnitude")
+                            else:
+                                if data["footer"]["orderOfMagnitude"] == "Million":
+                                    quarter_value = (int(float(row_data[index]) * 1000000) if row_data[index] is not None else np.nan)
+                                elif data["footer"]["orderOfMagnitude"] == "Billion":
+                                    quarter_value = (int(float(row_data[index]) * 1000000000) if row_data[index] is not None else np.nan)
+                                else:
+                                    print(f"data {symbol} in tab {data} have no order of magnitude")
+                                    logging.error(f"{today_date}: data {symbol} in tab {data} have no order of magnitude")
+                            label = f"{row_label}"
+                            latest_quarters_data[label] = quarter_value
+                            print(label, quarter_value)
+
+            expected_financials = ["Free Cash Flow", "Total Operating Profit/Loss", "Total Debt", "EBITDA"]
+            tabs = ['incomeStatement', 'balanceSheet', 'cashFlow']
+            for tab in tabs:
+                for row in responses[tab]["rows"]:
+                    if row["label"] in expected_financials:
+                        if responses[tab]['footer']['currency'] == 'USD':
+                            if responses[tab]["footer"]["orderOfMagnitude"] == "Million":
+                                value = (int(float(row["datum"][-2]) * rate * 1000000) if row["datum"][-2] is not None else np.nan)
+                                latest_quarters_data[row["label"]] = value
+                            elif responses[tab]["footer"]["orderOfMagnitude"] == "Billion":
+                                value = (int(float(row["datum"][-2]) * rate * 1000000000) if row["datum"][-2] is not None else np.nan)
+                                latest_quarters_data[row["label"]] = value
+                            else:
+                                print(f"data {symbol} in tab {tab} have no order of magnitude")
+                                logging.error(f"{today_date}: data {symbol} in tab {tab} have no order of magnitude")
+                        else:
+                            if responses[tab]["footer"]["orderOfMagnitude"] == "Million":
+                                value = (int(float(row["datum"][-2]) * 1000000) if row["datum"][-2] is not None else np.nan)
+                                latest_quarters_data[row["label"]] = value
+                            elif responses[tab]["footer"]["orderOfMagnitude"] == "Billion":
+                                value = (int(float(row["datum"][-2]) * 1000000000) if row["datum"][-2] is not None else np.nan)
+                                latest_quarters_data[row["label"]] = value
+                            else:
+                                print(f"data {symbol} in tab {tab} have no order of magnitude")
+                                logging.error(f"{today_date}: data {symbol} in tab {tab} have no order of magnitude")
+
+                        print(row["label"], value)
+                        
+
+            for value in expected_value:
+                if value not in latest_quarters_data.keys():
+                    latest_quarters_data[value] = np.nan
+                                
+            data_list.append(latest_quarters_data)
+            print(f"data with symbol {symbol} successfully retrieved")
+
+            df = pd.DataFrame(data_list)
+            df["Total Assets - Total Current Assets"] = df["Total Assets"] - df["Total Current Assets"]
+            df["EBIT"] = df["Pretax Income"] - df["Interest Expense Net of Capitalized Interest"]
+
+            columns_rename = {
+                "Cash Flows from/Used in Operating Activities, Direct": "net_operating_cash_flow",
+                "Total Assets": "total_assets",
+                "Total Liabilities": "total_liabilities",
+                "Total Current Liabilities": "total_current_liabilities",
+                "Total Equity": "total_equity",
+                "Total Revenue": "total_revenue",
+                "Net Income Available to Common Stockholders": "net_income",
+                "Total Debt": "total_debt",
+                "Equity Attributable to Parent Stockholders": "stockholders_equity",
+                "EBIT":"ebit",
+                "EBITDA": "ebitda",
+                "Cash, Cash Equivalents and Short Term Investments": "cash_and_short_term_investments",
+                "Cash": "cash_only",
+                "Diluted Weighted Average Shares Outstanding": "diluted_shares_outstanding",
+                "Gross Profit": "gross_income",
+                "Pretax Income": "pretax_income",
+                "Provision for Income Tax": "income_taxes",
+                "Total Assets - Total Current Assets": "total_non_current_assets",
+                "Free Cash Flow": "free_cash_flow",
+                "Interest Expense Net of Capitalized Interest": "interest_expense_non_operating",
+                "Total Operating Profit/Loss": "operating_income"
+            }
+            df = df.rename(columns=columns_rename).drop(["Total Current Assets"], axis = 1)
+            df[['income_taxes', 'interest_expense_non_operating']] *= -1
+
+            records = convert_df_to_records(df)
+
+            table_name = 'idx_financials_quarterly' if args.quarter else 'idx_financials_annual'
+
+            try:
+                supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
+                print("Upsert operation successful.")
+            except Exception as e:
+                    print(f"Error during upsert operation: {e}")
+        except Exception as e:
+            """
+            the error should be happened because the data is not available in morning star
+            """
+            logging.error(f"{today_date}: retrieved failed in data with morning star code: {symbol} {code} with error: {e}")
+            print(f"retrieved failed in data with morning star code: {symbol} {code} with error: {e}")
+            failed_symbols.append(symbol)
+    
+    return failed_symbols
+
+def save_failed_symbols(failed_symbols, filename):
+    with open(filename, 'w') as file:
+        for item in failed_symbols:
+            file.write(f"{item}\n")
+
+def load_failed_symbols(filename):
+    with open(filename, 'r') as file:
+        return [line.strip() for line in file]
+
+
 def main(args):
+
     url = "https://morning-star.p.rapidapi.com/stock/v2/get-financials"
     url_ms = "https://morning-star.p.rapidapi.com/stock/v2/get-financial-details"
     headers = {
@@ -104,139 +256,33 @@ def main(args):
     ms_code_data = supabase.table("idx_company_profile").select("morningstar_code", "symbol").neq("morningstar_code", 'null').execute()
     ms_code_dict = {d['symbol']: d['morningstar_code'] for d in ms_code_data.data}
 
-    data_list = []
     no_data = []
     logging.basicConfig(filename="log_error.log", level=logging.INFO)
 
-    # for testing the looping is working correctly, notes: 3 of the codes have different wsj format
-    # dict = {"AALI.JK":"0P0000BTGU","ASRM.JK":"0P0000CETF","BBCA.JK":"0P0000EP1E"}
-    dict = {"AALI.JK":"0P0000BTGU"}
-    # dict = {"ADRO.JK":"0P0000KTH0"}
+    # avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
+    #                 'mrei', 'asrm', 'bmri', 'bbri', 'home', 'lmpi', 'kmds', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 
+    #                 'inet', 'bank', 'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 
+    #                 'nips', 'irsx', 'mcor', 'bbtn', 'mtwi', 'sstm', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 
+    #                 'imas', 'pnbn', 'bswd', 'pnin', 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 
+    #                 'sdra', 'miti', 'tram', 'buah', 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 
+    #                 'bdmn', 'pnlf', 'nusa', 'beef', 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 
+    #                 'bjbr', 'hotl', 'army', 'duck', 'magp', 'npgf', 'lcgp', 'tril', 'forz']
 
-    # for symbol, code in ms_code_dict.items():
-    for symbol, code in dict.items():
-        try:
-            responses = fetch_form_responses(url, headers, code, "financials")
-            responses_detail = fetch_form_responses(url_ms, headers, code, "financials_details")
+    avail_data = ['smil']
+    
+    
+    avail_data = [item.upper() + '.JK' for item in avail_data]
+    avail_dict = {key: value for key, value in ms_code_dict.items() if key in avail_data}
 
-            is_data = responses_detail['incomeStatement']
-            bs_data = responses_detail['balanceSheet']
-            cf_data = responses_detail['cashFlow']
+    failed_symbols = process(url, url_ms, headers, avail_dict)
+    save_failed_symbols(failed_symbols, 'no_data.txt')
 
-            print(is_data)
-            print(bs_data)
-            print(cf_data)
-
-            expected_value = [
-            'Total Revenue','Net Income Available to Common Stockholders','EBITDA',
-            'Diluted Weighted Average Shares Outstanding','Gross Profit','Pretax Income',
-            'Provision for Income Tax', 'Interest Expense Net of Capitalized Interest','Total Operating Profit/Loss',
-
-            'Cash Flows from/Used in Operating Activities, Direct', 'Free Cash Flow',
-                        
-            'Total Assets', 'Total Current Assets', 'Total Liabilities', 'Total Current Liabilities', 'Total Equity',
-            'Total Debt','Equity Attributable to Parent Stockholders','Total Cash, Cash Equivalents and Short Term Investment', 'Cash']
-
-            all_data = [is_data, bs_data, cf_data]
-            quarter = is_data['columnDefs'][-2]
-            quarter_index = is_data['columnDefs'].index(quarter)
-
-            latest_quarters_data = {
-                "symbol" : symbol,
-                "date" : f'{quarter}-12-31' if args.annual else quarter_to_date(quarter),
-                "source" : 3
-            }
-            
-            for data in all_data:
-                for row in data['rows']:
-                    flattened_data = flatten_sublevel(row['subLevel'])
-                    for i in range(len(flattened_data)):
-                        row_label = flattened_data[i]['label']
-                        if row_label in expected_value:
-                            row_data = flattened_data[i]['datum'] 
-                            if is_data['footer']['currency'] == 'USD':
-                                quarter_value = (int(row_data[quarter_index]*rate*1000000) if row_data[quarter_index] is not None else np.nan)
-                            else:
-                                quarter_value = (int(float(row_data[quarter_index]) * 1000000) if row_data[quarter_index] is not None else np.nan)
-                            label = f"{row_label}"
-                            latest_quarters_data[label] = quarter_value
-                            print(label, quarter_value)
-
-            expected_financials = [
-            "Free Cash Flow", "Total Operating Profit/Loss", "Total Debt", "EBITDA", "Net Income Available to Common Stockholders"
-            ]
-            tabs = ['incomeStatement', 'balanceSheet', 'cashFlow']
-            for tab in tabs:
-                for row in responses[tab]["rows"]:
-                    if row["label"] in expected_financials:
-                        if is_data['footer']['currency'] == 'USD':
-                            latest_quarters_data[row["label"]] = (int(float(row["datum"][-2]) * rate * 1000000000) if row["datum"][-2] is not None else np.nan)
-                        else:
-                            latest_quarters_data[row["label"]] = (int(float(row["datum"][-2]) * 1000000000) if row["datum"][-2] is not None else np.nan)
-            
-
-            for value in expected_value:
-                if value not in latest_quarters_data.keys():
-                    latest_quarters_data[value] = np.nan
-                    
-            data_list.append(latest_quarters_data)
-            print(f"data with symbol {symbol} successfully retrieved")
-
-        except Exception as e:
-            """
-            the error should be happened because the data is not available in morning star
-            """
-            logging.error(f"retrieved failed in data with morning star code: {code} \nwith error: {e}")
-            print(f"retrieved failed in data with morning star code: {code} \nwith error: {e}")
-            no_row = {}
-            no_row["symbol"] = symbol
-            no_row["error"] = e
-            no_data.append(no_row)
-
-    df = pd.DataFrame(data_list)
-    df["Total Assets - Total Current Assets"] = df["Total Assets"] - df["Total Current Assets"]
-    df["EBIT"] = df["Pretax Income"] - df["Interest Expense Net of Capitalized Interest"]
-
-    columns_rename = {
-        "Cash Flows from/Used in Operating Activities, Direct": "net_operating_cash_flow",
-        "Total Assets": "total_assets",
-        "Total Liabilities": "total_liabilities",
-        "Total Current Liabilities": "total_current_liabilities",
-        "Total Equity": "total_equity",
-        "Total Revenue": "total_revenue",
-        "Net Income Available to Common Stockholders": "net_income",
-        "Total Debt": "total_debt",
-        "Equity Attributable to Parent Stockholders": "stockholders_equity",
-        "EBIT":"ebit",
-        "EBITDA": "ebitda",
-        "Total Cash, Cash Equivalents and Short Term Investment": "cash_and_short_term_investments",
-        "Cash": "cash_only",
-        "Diluted Weighted Average Shares Outstanding": "diluted_shares_outstanding",
-        "Gross Profit": "gross_income",
-        "Pretax Income": "pretax_income",
-        "Provision for Income Tax": "income_taxes",
-        "Total Assets - Total Current Assets": "total_non_current_assets",
-        "Free Cash Flow": "free_cash_flow",
-        "Interest Expense Net of Capitalized Interest": "interest_expense_non_operating",
-        "Total Operating Profit/Loss": "operating_income"
-    }
-    df = df.rename(columns=columns_rename).drop(["Total Current Assets"], axis = 1)
-    df[['income_taxes', 'interest_expense_non_operating']] *= -1
-
-    records = convert_df_to_records(df)
-
-    table_name = 'idx_financials_quarterly' if args.quarter else 'idx_financials_annual'
-    df.to_csv(f"{table_name}.csv", index = False)
-
-    try:
-        supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
-        print("Upsert operation successful.")
-    except Exception as e:
-        print(f"Error during upsert operation: {e}")
-
-    # no_data = pd.DataFrame(no_data)
-    # no_data.to_csv("no_data.csv")
-
+    # Retry failed symbols
+    print("Retrying failed symbols")
+    failed_symbols = load_failed_symbols('no_data.txt')
+    retry_symbols = {key: value for key, value in ms_code_dict.items() if key in failed_symbols}
+    failed_symbols = process(url, url_ms, headers, retry_symbols)
+    save_failed_symbols(failed_symbols, 'fix_no_data.txt')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Update financial data. If no argument is specified, the annual data will be updated.")
@@ -247,4 +293,17 @@ if __name__ == "__main__":
     if args.annual and args.quarter:
         print("Error: Please specify either -a or -q, not both.")
         raise SystemExit(1)
+    
+    url_currency = 'https://raw.githubusercontent.com/supertypeai/sectors_get_conversion_rate/master/conversion_rate.json'
+
+    response = requests.get(url_currency)
+    data = response.json()
+    rate = float(data['USD']['IDR'])
+
+    url_supabase = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    supabase = create_client(url_supabase, key)
+
+    today_date = datetime.today().strftime('%Y-%m-%d')
+
     main(args)

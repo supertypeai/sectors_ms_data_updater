@@ -49,3 +49,5 @@ venv
 
 data_*.csv
 *.ipynb
+
+cek_avail.py

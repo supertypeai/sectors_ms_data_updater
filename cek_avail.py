@@ -20,19 +20,20 @@ supabase = create_client(url_supabase, key)
 
 # Fetch data from Supabase
 # ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').eq("current_source", 2).execute()
-ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').execute()
-symbols = [d['symbol'].lower().replace('.jk', '') for d in ms_code_data.data]
+# ms_code_data = supabase.table("idx_company_profile").select("symbol").neq("morningstar_code", 'null').execute()
+# symbols = [d['symbol'].lower().replace('.jk', '') for d in ms_code_data.data]
 
 # List to hold symbols with no data
 no_data_urls = []
 avail_data = []
+symbols = ['bbca', 'amar', 'maba', 'ranc', 'cowl', 'btps', 'agrs', 'agro', 'life', 'bmas', 'bvic', 'mega', 'bsim', 'arto', 'mrei', 'asrm', 'bmri', 'bbri', 'home', 'lmpi', 'kmds', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 'inet', 'bank', 'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 'nips', 'irsx', 'mcor', 'bbtn', 'mtwi', 'sstm', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 'imas', 'pnbn', 'bswd', 'pnin', 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 'sdra', 'miti', 'tram', 'buah', 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 'bdmn', 'pnlf', 'nusa', 'beef', 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 'bjbr', 'hotl', 'army', 'duck', 'magp', 'npgf', 'lcgp', 'tril', 'forz']
 
 # Loop through the symbols
 for symbol in symbols:
 
     # Configure WebDriver options
     options = Options()
-    options.add_argument("--headless") 
+    # options.add_argument("--headless") 
 
     # Initialize WebDriver with options
     driver = webdriver.Chrome(options=options)
