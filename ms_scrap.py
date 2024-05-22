@@ -102,7 +102,7 @@ def process(url, url_ms, headers, avail_dict):
 
             'Cash Flows from/Used in Operating Activities, Direct', 'Free Cash Flow',
 
-            'Total Assets', 'Total Current Assets', 'Total Liabilities', 'Total Current Liabilities', 'Total Equity',
+            'Total Assets', 'Total Non-Current Assets', 'Total Current Assets', 'Total Liabilities', 'Total Current Liabilities', 'Total Equity',
             'Equity Attributable to Parent Stockholders','Cash, Cash Equivalents and Short Term Investments', 'Cash']
 
             # 'Total Non-Current Assets', 
@@ -187,6 +187,14 @@ def process(url, url_ms, headers, avail_dict):
             df = pd.DataFrame(data_list)
             df["Total Assets - Total Current Assets"] = df["Total Assets"] - df["Total Current Assets"]
             df["EBIT"] = df["Pretax Income"] - df["Interest Expense Net of Capitalized Interest"]
+            
+            df["Total Assets - Total Current Assets"] = df["Total Assets"] - df["Total Current Assets"]
+            df["EBIT"] = df["Pretax Income"] - df["Interest Expense Net of Capitalized Interest"]
+            df["total_cash_and_due_from_banks"] = df["Cash and Cash Equivalents"] - df["Cash"]
+            if df["Total Debt"].isnull().sum() == 1:
+                df["Total Debt"] = df['Current Debt And Capital Lease Obligation'] + df['Long Term Debt And Capital Lease Obligation']
+            if df["total_cash_and_due_from_banks"][0] == 0:
+                df.loc[0, "total_cash_and_due_from_banks"] = np.NAN
 
             columns_rename = {
                 "Cash Flows from/Used in Operating Activities, Direct": "net_operating_cash_flow",
@@ -259,16 +267,16 @@ def main(args):
     no_data = []
     logging.basicConfig(filename="log_error.log", level=logging.INFO)
 
-    # avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
-    #                 'mrei', 'asrm', 'bmri', 'bbri', 'home', 'lmpi', 'kmds', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 
-    #                 'inet', 'bank', 'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 
-    #                 'nips', 'irsx', 'mcor', 'bbtn', 'mtwi', 'sstm', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 
-    #                 'imas', 'pnbn', 'bswd', 'pnin', 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 
-    #                 'sdra', 'miti', 'tram', 'buah', 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 
-    #                 'bdmn', 'pnlf', 'nusa', 'beef', 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 
-    #                 'bjbr', 'hotl', 'army', 'duck', 'magp', 'npgf', 'lcgp', 'tril', 'forz']
+    avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
+                    'mrei', 'asrm', 'bmri', 'bbri', 'home', 'lmpi', 'kmds', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 
+                    'inet', 'bank', 'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 
+                    'nips', 'irsx', 'mcor', 'bbtn', 'mtwi', 'sstm', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 
+                    'imas', 'pnbn', 'bswd', 'pnin', 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 
+                    'sdra', 'miti', 'tram', 'buah', 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 
+                    'bdmn', 'pnlf', 'nusa', 'beef', 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 
+                    'bjbr', 'hotl', 'army', 'duck', 'magp', 'npgf', 'lcgp', 'tril', 'forz']
 
-    avail_data = ['smil']
+    # avail_data = ['mega']
     
     
     avail_data = [item.upper() + '.JK' for item in avail_data]
