@@ -103,7 +103,8 @@ def process(url, url_ms, headers, avail_dict):
             'Cash Flows from/Used in Operating Activities, Direct', 'Free Cash Flow',
 
             'Total Assets', 'Total Current Assets', 'Total Liabilities', 'Total Current Liabilities', 'Total Equity',
-            'Equity Attributable to Parent Stockholders','Cash, Cash Equivalents and Short Term Investments', 'Cash']
+            'Equity Attributable to Parent Stockholders','Cash, Cash Equivalents and Short Term Investments', 'Cash',
+            'Cash and Cash Equivalents', 'Current Debt And Capital Lease Obligation', 'Long Term Debt And Capital Lease Obligation']
 
             # 'Total Non-Current Assets', 
 
@@ -123,7 +124,7 @@ def process(url, url_ms, headers, avail_dict):
             for data, index in zip(all_data, indices):
                 for row in data['rows']:
                     flattened_data = flatten_sublevel(row['subLevel'])
-                    print(flattened_data)
+                    # print(flattened_data)
                     for i in range(len(flattened_data)):
                         row_label = flattened_data[i]['label']
                         if row_label in expected_value:
@@ -187,6 +188,11 @@ def process(url, url_ms, headers, avail_dict):
             df = pd.DataFrame(data_list)
             df["Total Assets - Total Current Assets"] = df["Total Assets"] - df["Total Current Assets"]
             df["EBIT"] = df["Pretax Income"] - df["Interest Expense Net of Capitalized Interest"]
+            df["total_cash_and_due_from_banks"] = df["Cash and Cash Equivalents"] - df["Cash"]
+            if df["Total Debt"].isnull().sum() == 1:
+                df["Total Debt"] = df['Current Debt And Capital Lease Obligation'] + df['Long Term Debt And Capital Lease Obligation']
+            if df["total_cash_and_due_from_banks"][0] == 0:
+                df.loc[0, "total_cash_and_due_from_banks"] = np.NAN
 
             columns_rename = {
                 "Cash Flows from/Used in Operating Activities, Direct": "net_operating_cash_flow",
@@ -211,18 +217,19 @@ def process(url, url_ms, headers, avail_dict):
                 "Interest Expense Net of Capitalized Interest": "interest_expense_non_operating",
                 "Total Operating Profit/Loss": "operating_income"
             }
-            df = df.rename(columns=columns_rename).drop(["Total Current Assets"], axis = 1)
+            df = df.rename(columns=columns_rename).drop(["Total Current Assets", 'Cash and Cash Equivalents', 'Current Debt And Capital Lease Obligation', 'Long Term Debt And Capital Lease Obligation'], axis = 1)
             df[['income_taxes', 'interest_expense_non_operating']] *= -1
 
             records = convert_df_to_records(df)
 
             table_name = 'idx_financials_quarterly' if args.quarter else 'idx_financials_annual'
+            df.to_csv("smil.csv", index = False)
 
-            try:
-                supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
-                print("Upsert operation successful.")
-            except Exception as e:
-                    print(f"Error during upsert operation: {e}")
+            # try:
+            #     supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
+            #     print("Upsert operation successful.")
+            # except Exception as e:
+            #         print(f"Error during upsert operation: {e}")
         except Exception as e:
             """
             the error should be happened because the data is not available in morning star
