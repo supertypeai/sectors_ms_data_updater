@@ -269,17 +269,16 @@ def main(args):
     no_data = []
     logging.basicConfig(filename="log_error.log", level=logging.INFO)
 
-    avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
-                    'mrei', 'asrm', 'bmri', 'bbri', 'home', 'lmpi', 'kmds', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 
-                    'inet', 'bank', 'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 
-                    'nips', 'irsx', 'mcor', 'bbtn', 'mtwi', 'sstm', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 
-                    'imas', 'pnbn', 'bswd', 'pnin', 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 
-                    'sdra', 'miti', 'tram', 'buah', 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 
-                    'bdmn', 'pnlf', 'nusa', 'beef', 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 
-                    'bjbr', 'hotl', 'army', 'duck', 'magp', 'npgf', 'lcgp', 'tril', 'forz']
+    # avail_data = ['bris']
 
-    # avail_data = ['mega']
-    
+    avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
+                    'mrei', 'asrm', 'bmri', 'bbri', 'home', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 'inet', 'bank', 
+                    'krah', 'dnar', 'amag', 'bcic', 'dcii', 'hill', 'plas', 'beks', 'hatm', 'pnbs', 'bbhi', 'nips', 'irsx', 
+                    'mcor', 'bbtn', 'bgtg', 'maya', 'bhat', 'nisp', 'nobu', 'goll', 'bnga', 'imas', 'pnbn', 'bswd', 'pnin', 
+                    'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 'sdra', 'miti', 'tram', 'buah', 
+                    'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 'bdmn', 'pnlf', 'nusa', 'beef', 
+                    'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 'bjbr', 'hotl', 'army', 'duck', 
+                    'magp', 'npgf', 'lcgp', 'tril', 'forz']
     
     avail_data = [item.upper() + '.JK' for item in avail_data]
     avail_dict = {key: value for key, value in ms_code_dict.items() if key in avail_data}
