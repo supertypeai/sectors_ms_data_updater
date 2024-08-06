@@ -1,0 +1,14 @@
+from dotenv import load_dotenv
+import os
+from supabase import create_client
+load_dotenv()
+
+url_supabase = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+supabase = create_client(url_supabase, key)
+
+data = {'symbol': 'DUCK.JK', 'date': '2026-09-30', 'source': 3, 'gross_income': 11328480000, 'total_revenue': 26978340000, 'operating_income': -5560000000, 'interest_expense_non_operating': None, 'pretax_income': -6191260000, 'income_taxes': 0, 'net_income': -5345090000, 'diluted_shares_outstanding': 1283330000, 'total_assets': 1344583160000, 'cash_and_short_term_investments': 701357270000, 'cash_only': 5440270000, 'total_non_current_assets': 204269730000, 'total_liabilities': 421652420000, 'total_current_liabilities': 395300330000, 'total_equity': 922930740000, 'stockholders_equity': 909029880000, 'net_operating_cash_flow': -31896680000, 'ebitda': None, 'total_debt': None, 'free_cash_flow': None, 'ebit': None, 'total_cash_and_due_from_banks': 475917000000, 'updated_on': '2024-06-05 01:44:55'}
+# data = [{'symbol': 'BRIS.JK', 'date': '2026-09-30', 'source': 3, 'gross_income': 11328480000, 'total_revenue': 26978340000, 'operating_income': -5560000000, 'interest_expense_non_operating': None, 'pretax_income': -6191260000, 'income_taxes': 0, 'net_income': -5345090000, 'diluted_shares_outstanding': 1283330000, 'total_assets': 1344583160000, 'cash_and_short_term_investments': 701357270000, 'cash_only': 5440270000, 'total_non_current_assets': 204269730000, 'total_liabilities': 421652420000, 'total_current_liabilities': 395300330000, 'total_equity': 922930740000, 'stockholders_equity': 909029880000, 'net_operating_cash_flow': -31896680000, 'ebitda': None, 'total_debt': None, 'free_cash_flow': None, 'ebit': None, 'total_cash_and_due_from_banks': 475917000000, 'updated_on': '2024-06-05 01:44:55'}]
+# data = {'symbol': 'BRIS.JK', 'date': '2027-09-30', 'source': 3, 'gross_income': 11328480000, 'total_revenue': 26978340000, 'operating_income': -5560000000, 'interest_expense_non_operating': None, 'pretax_income': -6191260000, 'income_taxes': 0, 'net_income': -5345090000, 'diluted_shares_outstanding': 1283330000, 'total_assets': 1344583160000, 'cash_and_short_term_investments': 701357270000, 'cash_only': 5440270000, 'total_non_current_assets': 204269730000, 'total_liabilities': 421652420000, 'total_current_liabilities': 395300330000, 'total_equity': 922930740000, 'stockholders_equity': 909029880000, 'net_operating_cash_flow': -31896680000, 'ebitda': None, 'total_debt': None, 'free_cash_flow': None, 'ebit': None, 'total_cash_and_due_from_banks': 475917000000, 'updated_on': '2024-06-05 01:44:55'}
+
+supabase.table("idx_financials_quarterly_testing").upsert(data, returning='minimal').execute()
