@@ -284,7 +284,7 @@ def main(args):
     #                 'bbyb', 'bjtm', 'babp', 'bbmd', 'abda', 'admf', 'kbri', 'jsky', 'baca', 'sdra', 'miti', 'tram', 'buah', 
     #                 'btpn', 'bksw', 'bnba', 'bbsi', 'cuan', 'bnli', 'gsmf', 'asdm', 'casa', 'bdmn', 'pnlf', 'nusa', 'beef', 
     #                 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 'bjbr', 'hotl', 'army', 'duck', 
-    #                 'magp', 'npgf', 'lcgp', 'tril', 'forz']
+    #                 'magp', 'npgf', 'lcgp', 'tril', 'forz', 'rimo']
     
     avail_data = [item.upper() + '.JK' for item in avail_data]
     avail_dict = {key: value for key, value in ms_code_dict.items() if key in avail_data}
