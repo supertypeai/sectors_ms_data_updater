@@ -147,7 +147,7 @@ def process(url, url_ms, headers, avail_dict):
                                     logging.error(f"{today_date}: data {symbol} in tab {data} have no order of magnitude")
                             label = f"{row_label}"
                             latest_quarters_data[label] = quarter_value
-                            print(label, quarter_value)
+                            # print(label, quarter_value)
 
             expected_financials = ["Free Cash Flow", "Total Operating Profit/Loss", "Total Debt", "EBITDA"]
             tabs = ['incomeStatement', 'balanceSheet', 'cashFlow']
@@ -175,7 +175,7 @@ def process(url, url_ms, headers, avail_dict):
                                 print(f"data {symbol} in tab {tab} have no order of magnitude")
                                 logging.error(f"{today_date}: data {symbol} in tab {tab} have no order of magnitude")
 
-                        print(row["label"], value)
+                        # print(row["label"], value)
                         
 
             for value in expected_value:
@@ -232,10 +232,10 @@ def process(url, url_ms, headers, avail_dict):
             df.to_csv(f"{table_name}_testing.csv", index = False)
 
             try:
-                # supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
-                # supabase.table(f"{table_name}").upsert(records[0], returning='minimal').execute()
-                # print(table_name)
-                # print(records[0])
+                supabase.table(f"{table_name}").upsert(records, returning='minimal').execute()
+                supabase.table(f"{table_name}").upsert(records[0], returning='minimal').execute()
+                print(table_name)
+                print(records[0])
                 print("Upsert operation successful.")
             except Exception as e:
                 print(f"Error during upsert operation: {e}")
@@ -275,7 +275,46 @@ def main(args):
     no_data = []
     logging.basicConfig(filename="log_error.log", level=logging.INFO)
 
-    avail_data = ['bbca']
+    avail_data = [
+        'GEMS.JK', 'AYAM.JK', 'BBTN.JK', 'ROCK.JK', 'GUNA.JK', 'PTPS.JK', 'HALO.JK', 'TRON.JK', 'GOLD.JK', 'HADE.JK', 'KRAH.JK', 'BOAT.JK',
+        'PNBN.JK', 'PKPK.JK', 'RONY.JK', 'DPNS.JK', 'MHKI.JK', 'DAAZ.JK', 'SAPX.JK', 'IPPE.JK', 'GHON.JK', 'GSMF.JK', 'AMIN.JK', 'ASLI.JK',
+        'ETWA.JK', 'WIFI.JK', 'KOKA.JK', 'SOFA.JK', 'KOBX.JK', 'BAIK.JK', 'MCOR.JK', 'ASHA.JK', 'RGAS.JK', 'MDIA.JK', 'CNTX.JK', 'JMAS.JK',
+        'ACRO.JK', 'MAMI.JK', 'AXIO.JK', 'ADMF.JK', 'CRAB.JK', 'DIGI.JK', 'ALKA.JK', 'TNCA.JK', 'ITIC.JK', 'PACK.JK', 'INDX.JK', 'LMAS.JK',
+        'KBRI.JK', 'APII.JK', 'MREI.JK', 'HITS.JK', 'TGUK.JK', 'TOOL.JK', 'BINA.JK', 'BABP.JK', 'BOBA.JK', 'SSTM.JK', 'TOSK.JK', 'TRUS.JK',
+        'NAIK.JK', 'BKSW.JK', 'PEVE.JK', 'ABDA.JK', 'BUMI.JK', 'UFOE.JK', 'POLY.JK', 'BMRI.JK', 'NTBK.JK', 'ALTO.JK', 'LRNA.JK', 'VINS.JK',
+        'VIVA.JK', 'BLUE.JK', 'CBRE.JK', 'VERN.JK', 'PNSE.JK', 'SMLE.JK', 'TBMS.JK', 'DATA.JK', 'PSDN.JK', 'ZATA.JK', 'ZBRA.JK', 'BOSS.JK',
+        'RANC.JK', 'DOSS.JK', 'ASJT.JK', 'HBAT.JK', 'PTMR.JK', 'JKSW.JK', 'KMDS.JK', 'KRYA.JK', 'KICI.JK', 'BABY.JK', 'KOCI.JK', 'PUDP.JK',
+        'NSSS.JK', 'TYRE.JK', 'SOUL.JK', 'LMPI.JK', 'GRPH.JK', 'NEST.JK', 'DNAR.JK', 'HAIS.JK', 'PNGO.JK', 'SMGA.JK', 'FINN.JK', 'TURI.JK',
+        'TRJA.JK', 'AWAN.JK', 'BTON.JK', 'BEEF.JK', 'NCKL.JK', 'HOPE.JK', 'SNLK.JK', 'OBMD.JK', 'COAL.JK', 'TAMA.JK', 'FLMC.JK', 'MEGA.JK',
+        'COCO.JK', 'POOL.JK', 'EPAC.JK', 'GDYR.JK', 'ALII.JK', 'GAMA.JK', 'MAGP.JK', 'SDRA.JK', 'HATM.JK', 'BSIM.JK', 'MMIX.JK', 'FIMP.JK',
+        'BNLI.JK', 'UNIT.JK', 'AYLS.JK', 'COWL.JK', 'SCNP.JK', 'ERTX.JK', 'SKYB.JK', 'BBMD.JK', 'ESIP.JK', 'SKRN.JK', 'MKAP.JK', 'INCF.JK',
+        'BDMN.JK', 'LCKM.JK', 'SPRE.JK', 'PGJO.JK', 'BACA.JK', 'TALF.JK', 'TUGU.JK', 'MANG.JK', 'PTPW.JK', 'PART.JK', 'SOLA.JK', 'LEAD.JK',
+        'BTPS.JK', 'MARI.JK', 'AMAG.JK', 'BJBR.JK', 'SWAT.JK', 'AIMS.JK', 'NOBU.JK', 'HYGN.JK', 'AMAR.JK', 'LAJU.JK', 'MEJA.JK', 'BBSI.JK',
+        'LIVE.JK', 'RCCC.JK', 'MITI.JK', 'MPIX.JK', 'BCIC.JK', 'OPMS.JK', 'PLAN.JK', 'ASMI.JK', 'CASH.JK', 'BVIC.JK', 'BINO.JK', 'BRMS.JK',
+        'CBPE.JK', 'MGLV.JK', 'AREA.JK', 'RELI.JK', 'ZYRX.JK', 'TRGU.JK', 'OCAP.JK', 'FITT.JK', 'CHIP.JK', 'NIPS.JK', 'MGNA.JK', 'BNGA.JK',
+        'FOOD.JK', 'IMAS.JK', 'PNIN.JK', 'NISP.JK', 'BNBA.JK', 'PDES.JK', 'HDIT.JK', 'LIFE.JK', 'UDNG.JK', 'BPFI.JK', 'TIRA.JK', 'SATU.JK',
+        'PNLF.JK', 'CBMF.JK', 'SBAT.JK', 'DAYA.JK', 'LABS.JK', 'SUGI.JK', 'ISEA.JK', 'BBCA.JK', 'EAST.JK', 'DUCK.JK', 'AGRS.JK', 'IKAN.JK',
+        'NANO.JK', 'FORZ.JK', 'JSKY.JK', 'OLIV.JK', 'LUCK.JK', 'FWCT.JK', 'PLAS.JK', 'BBYB.JK', 'BAPI.JK', 'ATAP.JK', 'BGTG.JK', 'CLAY.JK',
+        'BBRI.JK', 'BATR.JK', 'AMMN.JK', 'KPAS.JK', 'MABA.JK', 'TRUE.JK', 'BRIS.JK', 'AGRO.JK', 'AHAP.JK', 'SBMA.JK', 'KLAS.JK', 'BSML.JK',
+        'SWID.JK', 'MTRA.JK', 'IBOS.JK', 'KBAG.JK', 'BUAH.JK', 'BIKE.JK', 'KBLM.JK', 'EKAD.JK', 'SDMU.JK', 'RAFI.JK', 'HILL.JK', 'KAYU.JK',
+        'PPGL.JK', 'KETR.JK', 'PAMG.JK', 'EURO.JK', 'KKES.JK', 'MDKI.JK', 'BMAS.JK', 'BSBK.JK', 'INRU.JK', 'SRAJ.JK', 'LION.JK', 'NAYZ.JK',
+        'IRSX.JK', 'PRAS.JK', 'KDSI.JK', 'CANI.JK', 'MPXL.JK', 'ARTO.JK', 'TMPO.JK', 'LOPI.JK', 'PURI.JK', 'DEAL.JK', 'AKKU.JK', 'AGAR.JK',
+        'SINI.JK', 'ASRM.JK', 'DEFI.JK', 'HKMU.JK', 'HOME.JK', 'DSFI.JK', 'CINT.JK', 'KJEN.JK', 'BEER.JK', 'PURE.JK', 'BELL.JK', 'PSKT.JK',
+        'APLI.JK', 'TRIS.JK', 'NASI.JK', 'SCPI.JK', 'SHIP.JK', 'BEKS.JK', 'INTD.JK', 'IKBI.JK', 'GLVA.JK', 'WAPO.JK', 'KOPI.JK', 'LMSH.JK',
+        'SMIL.JK', 'SMKL.JK', 'CPRI.JK', 'IBFN.JK', 'DEWI.JK', 'ENZO.JK', 'MFMI.JK', 'LPGI.JK', 'CHEM.JK', 'SOTS.JK', 'CASA.JK', 'SMKM.JK',
+        'ESTA.JK', 'GPSO.JK', 'BHAT.JK', 'NINE.JK', 'BBKP.JK', 'GOLL.JK', 'DOID.JK', 'SOSS.JK', 'ESTI.JK', 'INET.JK', 'MKNT.JK', 'BANK.JK',
+        'FUTR.JK', 'FIRE.JK', 'KUAS.JK', 'CSIS.JK', 'MMLP.JK', 'ASPI.JK', 'RMBA.JK', 'INCI.JK', 'JAST.JK', 'TRAM.JK', 'LPIN.JK', 'LMAX.JK',
+        'PURA.JK', 'DCII.JK', 'LUCY.JK', 'INOV.JK', 'PNBS.JK', 'DADA.JK', 'KLIN.JK', 'BBHI.JK', 'BIMA.JK', 'RMKO.JK', 'BPTR.JK', 'ATIC.JK',
+        'MTSM.JK', 'RBMS.JK', 'MTWI.JK', 'CSRA.JK', 'NICK.JK', 'FORU.JK', 'ASBI.JK', 'BIKA.JK', 'RUNS.JK', 'ARTA.JK', 'CCSI.JK', 'JATI.JK',
+        'BSWD.JK', 'MEDS.JK', 'BJTM.JK', 'IDEA.JK', 'KPAL.JK', 'SUNI.JK', 'UVCR.JK', 'GLOB.JK', 'KDTN.JK', 'TDPM.JK', 'PANR.JK', 'MBTO.JK',
+        'BTPN.JK', 'BBSS.JK', 'BMBL.JK', 'SIMA.JK', 'BAUT.JK', 'CUAN.JK', 'BOLA.JK', 'IPAC.JK', 'DGNS.JK', 'OILS.JK', 'RIMO.JK', 'OKAS.JK',
+        'ASDM.JK', 'ICON.JK', 'NELY.JK', 'TECH.JK', 'REAL.JK', 'SEMA.JK', 'WICO.JK', 'BAYU.JK', 'NUSA.JK', 'WOWS.JK', 'PTDU.JK', 'NZIA.JK',
+        'CAKK.JK', 'OASA.JK', 'SMMA.JK', 'TRST.JK', 'BBNI.JK', 'MYRX.JK', 'AKSI.JK', 'TRUK.JK', 'UANG.JK', 'LFLO.JK', 'VAST.JK', 'VOKS.JK',
+        'VRNA.JK', 'IKPM.JK', 'WGSH.JK', 'YELO.JK', 'ZONE.JK', 'INPC.JK', 'MPOW.JK', 'INDO.JK', 'BNII.JK', 'GJTL.JK', 'PBRX.JK', 'RSCH.JK',
+        'TELE.JK', 'HAJJ.JK', 'KING.JK', 'MUTU.JK', 'ISAP.JK', 'GRPM.JK', 'PPRI.JK', 'HUMI.JK', 'ARMY.JK', 'RELF.JK', 'MAXI.JK', 'MENN.JK',
+        'NPGF.JK', 'TAYS.JK', 'AMMS.JK', 'LCGP.JK', 'IOTF.JK', 'PMMP.JK', 'LABA.JK', 'TRIL.JK', 'BESS.JK', 'GTRA.JK', 'TOYS.JK', 'ELIT.JK',
+        'CRSN.JK', 'AEGS.JK', 'SICO.JK', 'FOLK.JK', 'WINR.JK', 'GRIA.JK', 'GULA.JK', 'WIDI.JK', 'MSIE.JK', 'PADA.JK'
+    ]
 
     # avail_data =  [ 'bbca', 'amar', 'maba', 'cowl', 'btps', 'agrs', 'agro', 'life','bmas', 'bvic', 'mega', 'bsim', 'arto', 
     #                 'mrei', 'asrm', 'bmri', 'bbri', 'home', 'bpfi', 'smil', 'lpgi', 'bbkp', 'bris', 'bina', 'inet', 'bank', 
@@ -286,18 +325,18 @@ def main(args):
     #                 'skyb', 'sugi', 'smma', 'asmi', 'tugu', 'myrx', 'bbni', 'inpc', 'bnii', 'bjbr', 'hotl', 'army', 'duck', 
     #                 'magp', 'npgf', 'lcgp', 'tril', 'forz', 'rimo']
     
-    avail_data = [item.upper() + '.JK' for item in avail_data]
+    # avail_data = [item.upper() + '.JK' for item in avail_data]
     avail_dict = {key: value for key, value in ms_code_dict.items() if key in avail_data}
 
     failed_symbols = process(url, url_ms, headers, avail_dict)
     save_failed_symbols(failed_symbols, 'no_data.txt')
 
     # Retry failed symbols
-    print("Retrying failed symbols")
-    failed_symbols = load_failed_symbols('no_data.txt')
-    retry_symbols = {key: value for key, value in ms_code_dict.items() if key in failed_symbols}
-    failed_symbols = process(url, url_ms, headers, retry_symbols)
-    save_failed_symbols(failed_symbols, 'fix_no_data.txt')
+    # print("Retrying failed symbols")
+    # failed_symbols = load_failed_symbols('no_data.txt')
+    # retry_symbols = {key: value for key, value in ms_code_dict.items() if key in failed_symbols}
+    # failed_symbols = process(url, url_ms, headers, retry_symbols)
+    # save_failed_symbols(failed_symbols, 'fix_no_data.txt')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Update financial data. If no argument is specified, the annual data will be updated.")

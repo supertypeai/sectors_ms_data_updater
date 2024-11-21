@@ -50,5 +50,6 @@ venv
 data_*.csv
 *.JK.csv
 *.ipynb
+*.csv
 
 cek_avail.py
